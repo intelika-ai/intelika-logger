@@ -2,10 +2,16 @@ import { getOptions } from '../log.module'
 
 type LogLevel = 'WARN' | 'INFO' | 'ERROR'
 
+function stringifyMessage(msg: any) {
+  if (msg.stack) return msg.stack
+  if (typeof msg === 'object') return JSON.stringify(msg, null, 2)
+  return msg.toString()
+}
+
 function serializeMessage(...messages: any[]) {
   const payload = []
   const firstMessage = messages.shift()
-  payload.push(`\`\`\`json\n${JSON.stringify(firstMessage, null, 2)}\`\`\``)
+  payload.push(`\`\`\`json\n${stringifyMessage(firstMessage)}\`\`\``)
   for (const msg of messages) {
     if (msg.stack) payload.push(`\`\`\`\n${msg.stack}\`\`\``)
     else if (typeof msg === 'object') payload.push(`\`\`\`json\n${JSON.stringify(msg, null, 2)}\`\`\``)
