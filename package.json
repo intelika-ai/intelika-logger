@@ -1,12 +1,15 @@
 {
   "name": "@intelika/logger",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "main": "./dist/index.js",
   "scripts": {
     "build:lib": "tsc -p tsconfig.lib.json",
     "format": "prettier --write \"lib/**/*.ts\" \"test/**/*.ts\"",
     "lint": "eslint  \"lib/**/*.ts\" --fix"
   },
+  "files": [
+    "/dist"
+  ],
   "repository": {
     "type": "git",
     "url": "https://github.com/intelika-ai/intelika-logger"
@@ -33,5 +36,15 @@
   "directories": {
     "lib": "lib"
   },
-  "description": "Nestjs logger module designed by intelika-ai team"
+  "description": "Nestjs logger module designed by intelika-ai team",
+  "keywords": [
+    "nestjs",
+    "logger",
+    "intelika-ai",
+    "logger-module",
+    "intelika-logger",
+    "intelika",
+    "logging",
+    "nest utility"
+  ]
 }
