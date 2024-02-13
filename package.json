@@ -1,6 +1,6 @@
 {
   "name": "@intelika/logger",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "main": "./dist/index.js",
   "scripts": {
     "build:lib": "tsc -p tsconfig.lib.json",
