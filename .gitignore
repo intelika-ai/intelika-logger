@@ -17,3 +17,4 @@ dist/
 # Ignore OS generated files
 .DS_Store
 Thumbs.db
+diff.txt
