@@ -1,21 +1,7 @@
 import { Module, DynamicModule } from '@nestjs/common'
 import { LogService } from './log.service'
 import 'reflect-metadata'
-export interface Options {
-  isGlobal?: boolean
-  discordWebhook?: string
-  telegram?: {
-    token: string
-    chatId: string
-  }
-}
-
-interface AsyncOptions extends Options {
-  useFactory?: (...args: any[]) => Promise<Options> | Options
-  inject?: any[]
-}
-
-export let options: Options = {}
+import { AsyncOptions, Options, setOptions } from './options'
 
 @Module({
   providers: [LogService],
@@ -23,7 +9,7 @@ export let options: Options = {}
 })
 export class LogModule {
   static forRoot(opts: Options): DynamicModule {
-    options = opts
+    setOptions(opts)
     return {
       global: opts.isGlobal,
       module: LogModule,
@@ -44,10 +30,10 @@ export class LogModule {
               const returnType = Reflect.getMetadata('design:returntype', opt.useFactory)
 
               if (returnType !== Promise) {
-                options = opt.useFactory(...args) as Options
+                setOptions(opt.useFactory(...args) as Options)
               } else {
                 ;(opt.useFactory(...args) as Promise<AsyncOptions>).then((opts: Options) => {
-                  options = opts
+                  setOptions(opts)
                 })
               }
             }
@@ -60,5 +46,3 @@ export class LogModule {
     }
   }
 }
-
-export const getOptions = () => options

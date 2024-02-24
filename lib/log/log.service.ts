@@ -1,7 +1,7 @@
 import consoleEmitter from './emitters/console.emitter'
 import discordEmitter from './emitters/discord.emitter'
 import telegramEmitter from './emitters/telegram.emitter'
-import { Options, options } from './log.module'
+import { Options, setOptions } from './options'
 
 type LogLevel = 'WARN' | 'INFO' | 'ERROR'
 export enum Emitter {
@@ -57,7 +57,7 @@ export class LogService {
       this.context = context
     } else {
       this.context = context.context || ''
-      Object.assign(options, context)
+      setOptions(context)
     }
   }
 
