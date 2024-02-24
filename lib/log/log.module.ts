@@ -1,7 +1,7 @@
 import { Module, DynamicModule } from '@nestjs/common'
 import { LogService } from './log.service'
 import 'reflect-metadata'
-interface Options {
+export interface Options {
   isGlobal?: boolean
   discordWebhook?: string
   telegram?: {
@@ -15,7 +15,7 @@ interface AsyncOptions extends Options {
   inject?: any[]
 }
 
-let options: Options
+export let options: Options = {}
 
 @Module({
   providers: [LogService],

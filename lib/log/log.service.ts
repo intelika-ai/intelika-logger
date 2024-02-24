@@ -1,6 +1,7 @@
 import consoleEmitter from './emitters/console.emitter'
 import discordEmitter from './emitters/discord.emitter'
 import telegramEmitter from './emitters/telegram.emitter'
+import { Options, options } from './log.module'
 
 type LogLevel = 'WARN' | 'INFO' | 'ERROR'
 export enum Emitter {
@@ -44,11 +45,22 @@ class Message {
   }
 }
 
+interface OptionsWithContext extends Omit<Options, 'isGlobal'> {
+  context: string
+}
+
 export class LogService {
   private context: string
-  constructor(context: string) {
-    this.context = context
+
+  constructor(context: string | OptionsWithContext) {
+    if (typeof context === 'string') {
+      this.context = context
+    } else {
+      this.context = context.context || ''
+      Object.assign(options, context)
+    }
   }
+
   log(...msg: any[]) {
     return new Message(...msg).is('INFO').context(this.context)
   }
