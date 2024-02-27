@@ -1,21 +1,17 @@
-export interface Options {
-  isGlobal?: boolean
-  discordWebhook?: string
-  telegram?: {
-    token: string
-    chatId: string
-  }
-}
-
-export interface AsyncOptions extends Options {
-  useFactory?: (...args: any[]) => Promise<Options> | Options
-  inject?: any[]
-}
+import { Options } from './interfaces/option.interface'
 
 export const options: Options = {}
 
+/**
+ * Sets the options for the logger.
+ * @param opts - The options to be set.
+ */
 export function setOptions(opts: Options) {
   Object.assign(options, opts)
 }
 
+/**
+ * Retrieves the options for logging.
+ * @returns The options for logging.
+ */
 export const getOptions = () => options

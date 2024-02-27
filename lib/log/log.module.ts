@@ -1,13 +1,25 @@
 import { Module, DynamicModule } from '@nestjs/common'
 import { LogService } from './log.service'
 import 'reflect-metadata'
-import { AsyncOptions, Options, setOptions } from './options'
+import { setOptions } from './options'
+import { Options } from './interfaces/option.interface'
+import { AsyncOptions } from './interfaces/asyncOptions.interface'
 
 @Module({
   providers: [LogService],
   exports: [LogService]
 })
+/**
+ * @class LogModule
+ * Represents a module for logging functionality.
+ */
 export class LogModule {
+  /**
+   * @method forRoot
+   * Creates a dynamic module for the LogModule.
+   * @param opts - The options for configuring the LogModule.
+   * @returns A dynamic module configuration object.
+   */
   static forRoot(opts: Options): DynamicModule {
     setOptions(opts)
     return {
@@ -17,6 +29,12 @@ export class LogModule {
     }
   }
 
+  /**
+   * @method forRootAsync
+   * Creates a dynamic module for configuring the logger service asynchronously.
+   * @param opt - The options for configuring the logger service.
+   * @returns A dynamic module with the configured logger service.
+   */
   static forRootAsync(opt: AsyncOptions): DynamicModule {
     return {
       global: opt.isGlobal,

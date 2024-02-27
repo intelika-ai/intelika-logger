@@ -63,7 +63,7 @@ export class CatsService {
     }
 
     findOne(id: number): string {
-        this.logger.log(message).context("findOne").into(Emitter.CONSOLE)
+        this.logger.log(message).context("findOne").into(Emitter.DISCORD)
         return `This action returns a #${id} cat`;
     }
 }
@@ -71,7 +71,7 @@ export class CatsService {
 ```
 
 
-
+everywhere else
 ```typescript
 import { LogService, Emitter } from '@intelika/logger';
 
