@@ -10,7 +10,7 @@
     "sourceMap": true,
     "outDir": "./dist",
     "baseUrl": "./",
-    "types": ["reflect-metadata"],
+    "types": ["reflect-metadata","jest"],
     "incremental": true
   }
 }
