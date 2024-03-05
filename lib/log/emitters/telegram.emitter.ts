@@ -1,4 +1,4 @@
-import { getOptions } from '../log.module'
+import { getOptions } from '../options'
 
 type LogLevel = 'WARN' | 'INFO' | 'ERROR'
 

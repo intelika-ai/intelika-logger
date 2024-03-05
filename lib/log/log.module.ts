@@ -1,29 +1,27 @@
 import { Module, DynamicModule } from '@nestjs/common'
 import { LogService } from './log.service'
 import 'reflect-metadata'
-interface Options {
-  isGlobal?: boolean
-  discordWebhook?: string
-  telegram?: {
-    token: string
-    chatId: string
-  }
-}
-
-interface AsyncOptions extends Options {
-  useFactory?: (...args: any[]) => Promise<Options> | Options
-  inject?: any[]
-}
-
-let options: Options
+import { setOptions } from './options'
+import { Options } from './interfaces/option.interface'
+import { AsyncOptions } from './interfaces/asyncOptions.interface'
 
 @Module({
   providers: [LogService],
   exports: [LogService]
 })
+/**
+ * @class LogModule
+ * Represents a module for logging functionality.
+ */
 export class LogModule {
+  /**
+   * @method forRoot
+   * Creates a dynamic module for the LogModule.
+   * @param opts - The options for configuring the LogModule.
+   * @returns A dynamic module configuration object.
+   */
   static forRoot(opts: Options): DynamicModule {
-    options = opts
+    setOptions(opts)
     return {
       global: opts.isGlobal,
       module: LogModule,
@@ -31,6 +29,12 @@ export class LogModule {
     }
   }
 
+  /**
+   * @method forRootAsync
+   * Creates a dynamic module for configuring the logger service asynchronously.
+   * @param opt - The options for configuring the logger service.
+   * @returns A dynamic module with the configured logger service.
+   */
   static forRootAsync(opt: AsyncOptions): DynamicModule {
     return {
       global: opt.isGlobal,
@@ -44,10 +48,10 @@ export class LogModule {
               const returnType = Reflect.getMetadata('design:returntype', opt.useFactory)
 
               if (returnType !== Promise) {
-                options = opt.useFactory(...args) as Options
+                setOptions(opt.useFactory(...args) as Options)
               } else {
                 ;(opt.useFactory(...args) as Promise<AsyncOptions>).then((opts: Options) => {
-                  options = opts
+                  setOptions(opts)
                 })
               }
             }
@@ -60,5 +64,3 @@ export class LogModule {
     }
   }
 }
-
-export const getOptions = () => options

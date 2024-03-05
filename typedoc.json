@@ -1,0 +1,18 @@
+{
+    "includes": "./lib",
+    "entryPoints": ["./lib/index.ts"],
+    "out": "./docs",
+    "plugin": ["typedoc-material-theme"],
+    "themeColor": "#cb9820",
+    "exclude": ["**/node_modules/**", "**/test/**", "**/dist/**"],
+    "markedOptions": {
+        "gfm": true,
+        "tables": true,
+        "breaks": true,
+        "pedantic": false,
+        "sanitize": false,
+        "smartLists": true,
+        "smartypants": false
+    },
+    "name": "@intelika/logger",
+}
