@@ -1,6 +1,6 @@
+import { Options } from './interfaces/option.interface'
 import { OptionsWithContext } from './interfaces/options-Context.interface'
 import { Message } from './message'
-import { setOptions } from './options'
 
 /**
  * @enum Emitter
@@ -23,7 +23,7 @@ export enum Emitter {
  */
 export class LogService {
   private context: string
-
+  private options: Options
   /**
    * Creates a new instance of the LogService.
    * @constructor
@@ -32,12 +32,19 @@ export class LogService {
    * const logger = new LogService('MyContext')
    * logger.log('This is an info message').into(Emitter.CONSOLE)
    */
-  constructor(context: string | OptionsWithContext) {
+  constructor(context: string, options?: Options)
+  constructor(context: OptionsWithContext)
+  constructor(context: string | OptionsWithContext, options?: Options) {
     if (typeof context === 'string') {
       this.context = context
+      if (options) {
+        this.options = options
+      }
+    } else if (typeof context === 'object') {
+      this.context = context.context
+      this.options = context
     } else {
-      this.context = context?.context || ''
-      setOptions(context)
+      throw new Error('Invalid context')
     }
   }
 
@@ -48,7 +55,7 @@ export class LogService {
    * @returns A Message object with the specified message, severity level set to 'INFO', and the current context.
    */
   log(...msg: any[]) {
-    return new Message(...msg).is('INFO').context(this.context)
+    return new Message(this.options, ...msg).is('INFO').context(this.context)
   }
 
   /**
@@ -58,7 +65,7 @@ export class LogService {
    * @returns A Message object with the specified message, severity level set to 'WARN', and the current context.
    */
   warn(...msg: any[]) {
-    return new Message(...msg).is('WARN').context(this.context)
+    return new Message(this.options, ...msg).is('WARN').context(this.context)
   }
 
   /**
@@ -68,6 +75,6 @@ export class LogService {
    * @returns A Message object with the specified message, severity level set to 'ERROR', and the current context.
    */
   error(...msg: any[]) {
-    return new Message(...msg).is('ERROR').context(this.context)
+    return new Message(this.options, ...msg).is('ERROR').context(this.context)
   }
 }

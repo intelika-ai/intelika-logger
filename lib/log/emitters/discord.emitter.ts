@@ -1,4 +1,6 @@
-import { getOptions } from '../options'
+import { consoleColors, PACKAGE_NAME } from '../../config'
+
+import { Options } from '../interfaces/option.interface'
 
 type LogLevel = 'WARN' | 'INFO' | 'ERROR'
 
@@ -21,7 +23,7 @@ function serializeMessage(...messages: any[]) {
   return payload.join('\r\n')
 }
 
-const discordEmitter = (level: LogLevel, context: string, ...msg: any[]) => {
+const discordEmitter = (options: Options, level: LogLevel, context: string, ...msg: any[]) => {
   // Send Discord webhook
   const color = {
     ERROR: 0xff0000,
@@ -42,8 +44,16 @@ const discordEmitter = (level: LogLevel, context: string, ...msg: any[]) => {
       }
     ]
   }
-  const options = getOptions()
-  if (!options?.discordWebhook) return console.error('No Discord webhook provided')
+
+  if (!options) {
+    return console.error(`[${PACKAGE_NAME}] ${consoleColors.red}No options provided!${consoleColors.reset}`)
+  }
+
+  if (!options.discordWebhook) {
+    return console.error(
+      `[${PACKAGE_NAME}] ${consoleColors.red}No Discord webhook provided!${consoleColors.reset}`
+    )
+  }
 
   fetch(options.discordWebhook, {
     method: 'POST',
