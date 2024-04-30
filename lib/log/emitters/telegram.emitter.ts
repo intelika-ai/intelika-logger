@@ -1,4 +1,5 @@
-import { getOptions } from '../options'
+import { consoleColors, PACKAGE_NAME } from '../../config'
+import { Options } from '../interfaces/option.interface'
 
 type LogLevel = 'WARN' | 'INFO' | 'ERROR'
 
@@ -21,7 +22,7 @@ function serializeMessage(...messages: any[]) {
   return payload.join(NEWLINE)
 }
 
-const telegramEmitter = (level: LogLevel, context: string, ...msg: any[]) => {
+const telegramEmitter = (options: Options, level: LogLevel, context: string, ...msg: any[]) => {
   const flags = {
     ERROR: '🛑',
     WARN: '⚠️',
@@ -29,14 +30,26 @@ const telegramEmitter = (level: LogLevel, context: string, ...msg: any[]) => {
   }
 
   const message = [`${flags[level] || '❔'} **[${context}]**`, serializeMessage(...msg)].join(NEWLINE)
-  const options = getOptions()
 
-  if (!options?.telegram) return console.error('No Telegram token provided')
+  if (!options) {
+    return console.warn(`[${PACKAGE_NAME}] ${consoleColors.red}No options provided!${consoleColors.reset}`)
+  }
+
+  if (!options?.telegram) {
+    return console.warn(
+      `[${PACKAGE_NAME}] ${consoleColors.red}No Telegram token provided!${consoleColors.reset}`
+    )
+  }
 
   const { chatId, token } = options.telegram
   fetch(
     `https://api.telegram.org/bot${token}/sendMessage?chat_id=${chatId}&text=${message}&parse_mode=Markdown`
-  ).catch(console.error)
+  ).catch(error => {
+    console.error(
+      `[${PACKAGE_NAME}] ${consoleColors.red}Failed to send Telegram${consoleColors.reset}`,
+      error
+    )
+  })
 }
 
 export default telegramEmitter

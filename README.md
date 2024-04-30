@@ -27,6 +27,8 @@ bun add @intelika/logger
 ## Usage
 the package can be used in any JavaScript or TypeScript project. Here are some examples of how to use it in different environments.
 
+> [!NOTE]
+> The package is designed to be used with TypeScript, but it can also be used in JavaScript projects.
 
 Nest.js
 ```typescript
@@ -52,13 +54,10 @@ import { LogService } from '@intelika/logger';
 
 @Injectable()
 export class CatsService {
-  constructor(private readonly logger: LogService) {
-    // or create a new instance of LogService with a context
-    this.logger = new LogService(CatsService.name);
-  }
+  constructor(private readonly logger: LogService) {}
 
     findAll(): string {
-        this.logger.log(message).into(Emitter.CONSOLE)
+        this.logger.log(message).context(CatsService.name).into(Emitter.CONSOLE)
         return 'This action returns all cats';
     }
 
@@ -77,6 +76,23 @@ import { LogService, Emitter } from '@intelika/logger';
 
 const logger = new LogService('myContext');
 
+// --- OR --- 
+
+// const logger = new LogService({
+//   context: 'myContext',
+//   discordWebhook: 'https://discord.com/api/webhooks/...'
+// })
+
+// const logger = new LogService({
+//   telegram: {
+//     chatId: '1234567890',
+//     token: '1234567890:ABC-DEF1234ghIkl-zyx57W2v1u123ew11'
+//   },
+//   context: 'myContext'
+// })
+
+// const logger = new LogService(bootstrap.name)
+
 // Log a message to the console
 logger.log('Hello, world!').into(Emitter.CONSOLE);
 
@@ -86,6 +102,27 @@ logger.warn('Something might be wrong...').into(Emitter.DISCORD);
 // Log an error to Telegram
 logger.error('Something went wrong!').into(Emitter.TELEGRAM);
 ```
+
+> [!TIP]
+> ```ts
+>  const logger = new LogService({
+>   telegram: {
+>     chatId: '1234567890',
+>     token: '1234567890:ABC-DEF1234ghIkl-zyx57W2v1u123ew11'
+>   },
+>   context: 'myContext'
+> })
+>```
+> you can use the telegram emitter by providing the chatId and the token of your bot.
+
+> [!TIP]
+> ```ts
+>  const logger = new LogService({
+>   discordWebhook: 'https://discord.com/api/webhooks/...',
+>   context: 'myContext'
+> })
+>```
+> you can use the discord emitter by providing the webhook url.
 
 ## API
 

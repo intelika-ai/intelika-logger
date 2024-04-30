@@ -1,7 +1,6 @@
-import { Module, DynamicModule } from '@nestjs/common'
+import { Module, DynamicModule, Provider } from '@nestjs/common'
 import { LogService } from './log.service'
 import 'reflect-metadata'
-import { setOptions } from './options'
 import { Options } from './interfaces/option.interface'
 import { AsyncOptions } from './interfaces/asyncOptions.interface'
 
@@ -21,46 +20,57 @@ export class LogModule {
    * @returns A dynamic module configuration object.
    */
   static forRoot(opts: Options): DynamicModule {
-    setOptions(opts)
+    const logServiceProvider: Provider = {
+      provide: LogService,
+      useFactory: () => {
+        return new LogService({
+          context: '',
+          ...opts
+        })
+      }
+    }
+
     return {
       global: opts.isGlobal,
       module: LogModule,
-      exports: [LogService]
+      providers: [logServiceProvider],
+      exports: [logServiceProvider]
     }
   }
 
-  /**
-   * @method forRootAsync
-   * Creates a dynamic module for configuring the logger service asynchronously.
-   * @param opt - The options for configuring the logger service.
-   * @returns A dynamic module with the configured logger service.
-   */
   static forRootAsync(opt: AsyncOptions): DynamicModule {
+    let factoryItem
+    if (opt.useFactory) {
+      const returnType = Reflect.getMetadata('design:returntype', opt.useFactory)
+      if (returnType === Promise) {
+        factoryItem = async (...args: any[]) => {
+          const options = await opt.useFactory(...args)
+          return new LogService({
+            ...options,
+            context: ''
+          })
+        }
+      } else {
+        factoryItem = (...args: any[]) => {
+          const options = opt.useFactory(...args)
+          return new LogService({
+            ...options,
+            context: ''
+          })
+        }
+      }
+    }
+    const logServiceProvider: Provider = {
+      provide: LogService,
+      useFactory: factoryItem,
+      inject: opt.inject
+    }
+
     return {
       global: opt.isGlobal,
       module: LogModule,
-      providers: [
-        {
-          inject: opt.inject,
-          provide: 'OPTIONS',
-          useFactory: (...args: any[]) => {
-            if (opt.useFactory) {
-              const returnType = Reflect.getMetadata('design:returntype', opt.useFactory)
-
-              if (returnType !== Promise) {
-                setOptions(opt.useFactory(...args) as Options)
-              } else {
-                ;(opt.useFactory(...args) as Promise<AsyncOptions>).then((opts: Options) => {
-                  setOptions(opts)
-                })
-              }
-            }
-            return opt
-          }
-        },
-        LogService
-      ],
-      exports: [LogService]
+      providers: [logServiceProvider],
+      exports: [logServiceProvider]
     }
   }
 }
