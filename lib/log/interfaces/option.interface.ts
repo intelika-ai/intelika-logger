@@ -40,4 +40,28 @@ export interface Options {
     token: string
     chatId: string
   }
+
+  /**
+   * Options for the file emitter.
+   * @property path - The path for the file or directory.
+   * @property includeDateInFilename - Whether to include the date in the filename. [when path is a directory]
+   * @property fileFormat - The format of the file. [txt | log]
+   * @property flags - The flags for writing to the file. [a | w | r | a+ | w+ | r+]
+   * @property messageFormat - The format of the message. [DATE | LEVEL | CONTEXT | MESSAGE]
+   * @default undefined
+   * @example { path: './logs', includeDateInFilename: true, fileFormat: 'log', messageFormat: 'DATE - LEVEL | CONTEXT | MESSAGE' }
+   */
+  file?: {
+    path: string // can be a file path or a directory path
+    includeDateInFilename?: boolean
+    fileFormat?: 'txt' | 'log'
+    flags?: string // 'a' | 'w' | 'r' | 'a+' | 'w+' | 'r+'
+    messageFormat?:
+      | 'DATE | LEVEL | CONTEXT | MESSAGE'
+      | 'DATE - LEVEL | CONTEXT | MESSAGE'
+      | 'DATE | CONTEXT | MESSAGE'
+      | 'DATE - CONTEXT | MESSAGE'
+      | 'DATE | MESSAGE'
+      | 'DATE - MESSAGE'
+  }
 }
