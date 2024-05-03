@@ -18,12 +18,6 @@
 
 export interface Options {
   /**
-   * Whether the module is global.
-   * @default false
-   */
-  isGlobal?: boolean
-
-  /**
    * The Discord webhook URL.
    * @default undefined
    * @example 'https://discord.com/api/webhooks/...'
@@ -64,4 +58,18 @@ export interface Options {
       | 'DATE | MESSAGE'
       | 'DATE - MESSAGE'
   }
+}
+
+/**
+ * @interface NestOptions
+ * Represents a set of options for configuring the logger service.
+ * @property isGlobal - Whether the module is global.
+ * @default false
+ */
+export interface NestOptions extends Options {
+  /**
+   * Whether the module is global.
+   * @default false
+   */
+  isGlobal?: boolean
 }
