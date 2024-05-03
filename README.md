@@ -183,6 +183,7 @@ The package supports the following emitters:
 - CONSOLE: Logs the message to the console.
 - DISCORD: Sends the message to a Discord channel.
 - TELEGRAM: Sends the message to a Telegram chat.
+- FILE: Logs the message to a file.
 
 ## Contributing
 Pull requests are welcome. For major changes, please open an issue first to discuss what you would like to change.
