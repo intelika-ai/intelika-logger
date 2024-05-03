@@ -11,7 +11,8 @@ import { Message } from './message'
 export enum Emitter {
   'DISCORD' = 'DISCORD',
   'TELEGRAM' = 'TELEGRAM',
-  'CONSOLE' = 'CONSOLE'
+  'CONSOLE' = 'CONSOLE',
+  'FILE' = 'FILE'
 }
 
 /**

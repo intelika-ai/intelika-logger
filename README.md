@@ -15,14 +15,12 @@ yarn:
 ```bash
 yarn add @intelika/logger
 ```
-pnpm:
-```bash
-pnpm add @intelika/logger
-```
-bun:
-```bash
-bun add @intelika/logger
-```
+
+## Emitters
+- [File](./lib/log/emitters/file.emitter.ts)
+- [Telegram](./lib/log/emitters/telegram.emitter.ts)
+- [Discord Webhook](./lib/log/emitters/discord.emitter.ts)
+- [Console](./lib/log/emitters/console.emitter.ts)
 
 ## Usage
 the package can be used in any JavaScript or TypeScript project. Here are some examples of how to use it in different environments.
@@ -123,6 +121,22 @@ logger.error('Something went wrong!').into(Emitter.TELEGRAM);
 > })
 >```
 > you can use the discord emitter by providing the webhook url.
+
+> [!TIP]
+> ```ts
+> const logService = new LogService('TestContext', {
+>  file: {
+>    path: './logs',
+>    includeDateInFilename: true,
+>    fileFormat: 'log',
+>    messageFormat: 'DATE - LEVEL | CONTEXT | MESSAGE'
+>  }
+>})
+>```
+> you can use the file emitter by providing the path of the file, the file format, and the message format.
+
+## Examples
+you can find more examples in the [examples](./examples) directory.
 
 ## API
 

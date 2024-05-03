@@ -1,4 +1,4 @@
-import { Options } from './option.interface'
+import { NestOptions, Options } from './option.interface'
 
 /**
  * @interface AsyncOptions
@@ -18,7 +18,7 @@ import { Options } from './option.interface'
  * }
  */
 
-export interface AsyncOptions extends Options {
+export interface AsyncOptions extends NestOptions {
   useFactory?: (...args: any[]) => Promise<Options> | Options
 
   inject?: any[]

@@ -1,7 +1,7 @@
 import { Module, DynamicModule, Provider } from '@nestjs/common'
 import { LogService } from './log.service'
 import 'reflect-metadata'
-import { Options } from './interfaces/option.interface'
+import { NestOptions } from './interfaces/option.interface'
 import { AsyncOptions } from './interfaces/asyncOptions.interface'
 
 @Module({
@@ -19,7 +19,7 @@ export class LogModule {
    * @param opts - The options for configuring the LogModule.
    * @returns A dynamic module configuration object.
    */
-  static forRoot(opts: Options): DynamicModule {
+  static forRoot(opts: NestOptions): DynamicModule {
     const logServiceProvider: Provider = {
       provide: LogService,
       useFactory: () => {
