@@ -33,13 +33,14 @@ const discordEmitter = (options: Options, level: LogLevel, context: string, ...m
     VERBOSE: 0x000000
   }[level]
 
+  const time = Math.floor(Date.now() / 1000)
   // discord webhook
   const body = {
     content: `**${level}**`,
     embeds: [
       {
         title: `[** ${context} **]`,
-        description: serializeMessage(...msg),
+        description: serializeMessage(...msg) + `\n\n**Time**: <t:${time}:R>`,
         color: color
       }
     ]
