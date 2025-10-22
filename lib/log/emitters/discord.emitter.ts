@@ -4,21 +4,49 @@ import { Options } from '../interfaces/option.interface'
 
 type LogLevel = 'WARN' | 'INFO' | 'ERROR'
 
-function stringifyMessage(msg: any) {
-  if (msg.stack) return msg.stack
-  if (typeof msg === 'object') return JSON.stringify(msg, null, 2)
-  return msg.toString()
+/**
+ * Removes ANSI color codes from a string
+ * This ensures Discord webhooks display clean text without shell escape sequences
+ */
+function stripAnsiCodes(str: string): string {
+  // Regex to match ANSI escape sequences (shell color codes)
+  return str.replace(/\x1B\[[0-?]*[ -/]*[@-~]/g, '')
 }
 
+/**
+ * Converts a message to a string representation
+ * Handles stack traces, objects, and primitive values
+ */
+function stringifyMessage(msg: any) {
+  let result: string
+  if (msg.stack) result = msg.stack
+  else if (typeof msg === 'object') result = JSON.stringify(msg, null, 2)
+  else result = msg.toString()
+  
+  // Strip ANSI color codes before returning
+  return stripAnsiCodes(result)
+}
+
+/**
+ * Serializes multiple messages into a Discord-formatted string
+ * Strips ANSI color codes from all messages
+ */
 function serializeMessage(...messages: any[]) {
   const payload = []
   const firstMessage = messages.shift()
-  payload.push(`\`\`\`json\n${stringifyMessage(firstMessage)}\`\`\``)
+  payload.push(stripAnsiCodes(`\`\`\`json\n${stringifyMessage(firstMessage)}\`\`\``))
+  
+  // Process remaining messages and strip ANSI codes
   for (const msg of messages) {
-    if (msg.stack) payload.push(`\`\`\`\n${msg.stack}\`\`\``)
-    else if (typeof msg === 'object') payload.push(`\`\`\`json\n${JSON.stringify(msg, null, 2)}\`\`\``)
-    else if (typeof msg === 'number') payload.push('`' + msg + '`')
-    else payload.push(msg.toString())
+    if (msg.stack) {
+      payload.push(stripAnsiCodes(`\`\`\`\n${msg.stack}\`\`\``))
+    } else if (typeof msg === 'object') {
+      payload.push(stripAnsiCodes(`\`\`\`json\n${stripAnsiCodes(JSON.stringify(msg, null, 2))}\`\`\``))
+    } else if (typeof msg === 'number') {
+      payload.push(stripAnsiCodes('`' + msg + '`'))
+    } else {
+      payload.push(stripAnsiCodes(msg.toString()))
+    }
   }
   return payload.join('\r\n')
 }
