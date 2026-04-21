@@ -1,5 +1,6 @@
 import { consoleColors, PACKAGE_NAME } from '../../config'
 import { Options } from '../interfaces/option.interface'
+import { createOutboundMessageParts } from './shared/outbound-serializer'
 
 type LogLevel = 'WARN' | 'INFO' | 'ERROR'
 
@@ -11,14 +12,11 @@ const NEWLINE = `
 `
 
 function serializeMessage(...messages: any[]) {
-  const payload = []
-  for (const msg of messages) {
-    if (msg.stack) payload.push(`\`${NEWLINE}${msg.stack}\``)
-    else if (typeof msg === 'object')
-      payload.push(`\`\`\`json${NEWLINE}${JSON.stringify(msg, null, 2)}\`\`\``)
-    else if (typeof msg === 'number') payload.push('`' + msg + '`')
-    else payload.push(msg.toString())
-  }
+  const payload = createOutboundMessageParts(messages).map(part => {
+    if (part.kind === 'structured') return `\`\`\`json${NEWLINE}${part.text}\`\`\``
+    if (part.kind === 'inline') return '`' + part.text + '`'
+    return part.text
+  })
   return payload.join(NEWLINE)
 }
 
@@ -42,9 +40,13 @@ const telegramEmitter = (options: Options, level: LogLevel, context: string, ...
   }
 
   const { chatId, token } = options.telegram
-  fetch(
-    `https://api.telegram.org/bot${token}/sendMessage?chat_id=${chatId}&text=${message}&parse_mode=Markdown`
-  ).catch(error => {
+  const searchParams = new URLSearchParams({
+    chat_id: chatId,
+    text: message,
+    parse_mode: 'Markdown'
+  })
+
+  fetch(`https://api.telegram.org/bot${token}/sendMessage?${searchParams.toString()}`).catch(error => {
     console.error(
       `[${PACKAGE_NAME}] ${consoleColors.red}Failed to send Telegram${consoleColors.reset}`,
       error

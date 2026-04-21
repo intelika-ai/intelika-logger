@@ -1,54 +1,34 @@
 import { consoleColors, PACKAGE_NAME } from '../../config'
-
 import { Options } from '../interfaces/option.interface'
+import {
+  createOutboundMessageParts,
+  OutboundMessagePart,
+  stripAnsiCodes
+} from './shared/outbound-serializer'
 
 type LogLevel = 'WARN' | 'INFO' | 'ERROR'
 
-/**
- * Removes ANSI color codes from a string
- * This ensures Discord webhooks display clean text without shell escape sequences
- */
-function stripAnsiCodes(str: string): string {
-  // Regex to match ANSI escape sequences (shell color codes)
-  return str.replace(/\x1B\[[0-?]*[ -/]*[@-~]/g, '')
-}
+const MAX_TITLE_LENGTH = 256
+const MAX_EMBED_DESCRIPTION_LENGTH = 4096
+const MAX_EMBED_TEXT_LENGTH = 6000
+const DESCRIPTION_SEPARATOR = '\n'
 
-/**
- * Converts a message to a string representation
- * Handles stack traces, objects, and primitive values
- */
-function stringifyMessage(msg: any) {
-  let result: string
-  if (msg.stack) result = msg.stack
-  else if (typeof msg === 'object') result = JSON.stringify(msg, null, 2)
-  else result = msg.toString()
-  
-  // Strip ANSI color codes before returning
-  return stripAnsiCodes(result)
-}
-
-/**
- * Serializes multiple messages into a Discord-formatted string
- * Strips ANSI color codes from all messages
- */
-function serializeMessage(...messages: any[]) {
-  const payload = []
-  const firstMessage = messages.shift()
-  payload.push(stripAnsiCodes(`\`\`\`json\n${stringifyMessage(firstMessage)}\`\`\``))
-  
-  // Process remaining messages and strip ANSI codes
-  for (const msg of messages) {
-    if (msg.stack) {
-      payload.push(stripAnsiCodes(`\`\`\`\n${msg.stack}\`\`\``))
-    } else if (typeof msg === 'object') {
-      payload.push(stripAnsiCodes(`\`\`\`json\n${stripAnsiCodes(JSON.stringify(msg, null, 2))}\`\`\``))
-    } else if (typeof msg === 'number') {
-      payload.push(stripAnsiCodes('`' + msg + '`'))
-    } else {
-      payload.push(stripAnsiCodes(msg.toString()))
+type DiscordWebhookBody = {
+  content: string
+  embeds: [
+    {
+      title: string
+      description: string
+      color: number
+      footer: { text: string }
     }
-  }
-  return payload.join('\r\n')
+  ]
+}
+
+type RenderableSegment = {
+  prefix: string
+  content: string
+  suffix: string
 }
 
 const discordEmitter = (options: Options, level: LogLevel, context: string, ...msg: any[]) => {
@@ -61,19 +41,6 @@ const discordEmitter = (options: Options, level: LogLevel, context: string, ...m
     VERBOSE: 0x000000
   }[level]
 
-  const time = Math.floor(Date.now() / 1000)
-  // discord webhook
-  const body = {
-    content: `**${level}**`,
-    embeds: [
-      {
-        title: `[** ${context} **]`,
-        description: serializeMessage(...msg) + `\n\n**Time**: <t:${time}:R>`,
-        color: color
-      }
-    ]
-  }
-
   if (!options) {
     return console.error(`[${PACKAGE_NAME}] ${consoleColors.red}No options provided!${consoleColors.reset}`)
   }
@@ -84,12 +51,145 @@ const discordEmitter = (options: Options, level: LogLevel, context: string, ...m
     )
   }
 
-  fetch(options.discordWebhook, {
-    method: 'POST',
-    body: JSON.stringify(body),
-    headers: {
-      'Content-Type': 'application/json'
-    }
-  }).catch(console.error)
+  const bodies = buildDiscordWebhookBodies(level, context, color, ...msg)
+
+  void sendDiscordMessages(options.discordWebhook, bodies).catch(console.error)
 }
+
+export function buildDiscordWebhookBodies(
+  level: LogLevel,
+  context: string,
+  color: number,
+  ...messages: any[]
+): DiscordWebhookBody[] {
+  const time = Math.floor(Date.now() / 1000)
+  const parts = createOutboundMessageParts(messages)
+  const segments = parts.flatMap(part => splitSegment(toRenderableSegment(part)))
+  const descriptionChunks = packSegments(
+    segments.length > 0 ? segments : [toRenderableSegment({ kind: 'text', text: 'No payload provided.' })],
+    MAX_EMBED_DESCRIPTION_LENGTH
+  )
+
+  return descriptionChunks.map((description, index) => {
+    const partSuffix =
+      descriptionChunks.length > 1 ? ` | Part ${index + 1}/${descriptionChunks.length}` : ''
+    const title = truncate(`[** ${stripAnsiCodes(context)} **]${partSuffix}`, MAX_TITLE_LENGTH)
+    const footerText = `Time: <t:${time}:R>${partSuffix}`
+    const descriptionLimit = Math.min(
+      MAX_EMBED_DESCRIPTION_LENGTH,
+      MAX_EMBED_TEXT_LENGTH - title.length - footerText.length
+    )
+
+    return {
+      content: truncate(`**${level}**`, 2000),
+      embeds: [
+        {
+          title,
+          description: truncate(description, descriptionLimit),
+          color,
+          footer: { text: footerText }
+        }
+      ]
+    }
+  })
+}
+
 export default discordEmitter
+
+async function sendDiscordMessages(webhook: string, bodies: DiscordWebhookBody[]): Promise<void> {
+  for (const body of bodies) {
+    await fetch(webhook, {
+      method: 'POST',
+      body: JSON.stringify(body),
+      headers: {
+        'Content-Type': 'application/json'
+      }
+    })
+  }
+}
+
+function toRenderableSegment(part: OutboundMessagePart): RenderableSegment {
+  if (part.kind === 'structured') {
+    return {
+      prefix: '```json\n',
+      content: stripAnsiCodes(part.text),
+      suffix: '\n```'
+    }
+  }
+
+  if (part.kind === 'inline') {
+    return {
+      prefix: '`',
+      content: stripAnsiCodes(part.text),
+      suffix: '`'
+    }
+  }
+
+  return {
+    prefix: '',
+    content: stripAnsiCodes(part.text),
+    suffix: ''
+  }
+}
+
+function splitSegment(segment: RenderableSegment): RenderableSegment[] {
+  const renderedLength = segment.prefix.length + segment.content.length + segment.suffix.length
+  if (renderedLength <= MAX_EMBED_DESCRIPTION_LENGTH) {
+    return [segment]
+  }
+
+  const maxContentLength =
+    MAX_EMBED_DESCRIPTION_LENGTH - segment.prefix.length - segment.suffix.length
+
+  if (maxContentLength <= 0) {
+    return [
+      {
+        prefix: '',
+        content: truncate(segment.content, MAX_EMBED_DESCRIPTION_LENGTH),
+        suffix: ''
+      }
+    ]
+  }
+
+  const chunks: RenderableSegment[] = []
+  for (let start = 0; start < segment.content.length; start += maxContentLength) {
+    chunks.push({
+      prefix: segment.prefix,
+      content: segment.content.slice(start, start + maxContentLength),
+      suffix: segment.suffix
+    })
+  }
+
+  return chunks
+}
+
+function packSegments(segments: RenderableSegment[], maxLength: number): string[] {
+  const chunks: string[] = []
+  let current = ''
+
+  for (const segment of segments) {
+    const rendered = `${segment.prefix}${segment.content}${segment.suffix}`
+    const candidate = current.length === 0 ? rendered : `${current}${DESCRIPTION_SEPARATOR}${rendered}`
+
+    if (candidate.length <= maxLength) {
+      current = candidate
+      continue
+    }
+
+    if (current.length > 0) {
+      chunks.push(current)
+    }
+
+    current = rendered
+  }
+
+  if (current.length > 0) {
+    chunks.push(current)
+  }
+
+  return chunks
+}
+
+function truncate(value: string, maxLength: number): string {
+  return value.length <= maxLength ? value : value.slice(0, maxLength)
+}

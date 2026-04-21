@@ -3,28 +3,14 @@ import path from 'path'
 import { writeFile } from 'fs/promises'
 import { consoleColors, PACKAGE_NAME } from '../../config'
 import { Options } from '../interfaces/option.interface'
+import { serializeCompactMessages } from './shared/outbound-serializer'
 
 type LogLevel = 'WARN' | 'INFO' | 'ERROR'
 
 const NEWLINE = `\n`
 
 function serializeMessage(...messages: any[]): string {
-  const payload: string[] = []
-  const firstMessage = messages.shift()
-  payload.push(stringifyMessage(firstMessage))
-  for (const msg of messages) {
-    if (msg.stack) payload.push(msg.stack)
-    else if (typeof msg === 'object') payload.push(JSON.stringify(msg, null, 2))
-    else if (typeof msg === 'number') payload.push(msg.toString())
-    else payload.push(msg.toString())
-  }
-  return payload.join(NEWLINE)
-}
-
-function stringifyMessage(msg: any): string {
-  if (msg.stack) return msg.stack
-  if (typeof msg === 'object') return JSON.stringify(msg, null, 2)
-  return msg.toString()
+  return serializeCompactMessages(messages, NEWLINE)
 }
 
 async function fileEmitter(options: Options, level: LogLevel, context: string, ...msg: any[]): Promise<void> {
