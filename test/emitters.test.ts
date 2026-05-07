@@ -66,6 +66,8 @@ describe('Outbound emitters', () => {
   })
 
   it('builds a single discord webhook body for small payloads', () => {
+    jest.spyOn(Date, 'now').mockReturnValue(1778151894000)
+
     const bodies = buildDiscordWebhookBodies('ERROR', 'DiscordContext', 0xff0000, {
       ok: true,
       code: 400
@@ -73,6 +75,8 @@ describe('Outbound emitters', () => {
 
     expect(bodies).toHaveLength(1)
     expect(bodies[0].embeds[0].description).toContain('"ok": true')
+    expect(bodies[0].embeds[0].description).toContain('**Time**: <t:1778151894:R>')
+    expect(bodies[0].embeds[0].footer).toBeUndefined()
     expectDiscordLimits(bodies)
   })
 
@@ -90,7 +94,9 @@ describe('Outbound emitters', () => {
     )
 
     expect(bodies.length).toBeGreaterThan(1)
-    expect(bodies[0].embeds[0].footer.text).toContain('Part 1/')
+    expect(bodies[0].embeds[0].description).toContain('**Time**: <t:')
+    expect(bodies[0].embeds[0].footer?.text).toContain('Part 1/')
+    expect(bodies[0].embeds[0].footer?.text).not.toContain('<t:')
     expectDiscordLimits(bodies)
   })
 

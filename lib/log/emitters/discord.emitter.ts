@@ -20,7 +20,7 @@ type DiscordWebhookBody = {
       title: string
       description: string
       color: number
-      footer: { text: string }
+      footer?: { text: string }
     }
   ]
 }
@@ -71,23 +71,24 @@ export function buildDiscordWebhookBodies(
   )
 
   return descriptionChunks.map((description, index) => {
-    const partSuffix =
-      descriptionChunks.length > 1 ? ` | Part ${index + 1}/${descriptionChunks.length}` : ''
-    const title = truncate(`[** ${stripAnsiCodes(context)} **]${partSuffix}`, MAX_TITLE_LENGTH)
-    const footerText = `Time: <t:${time}:R>${partSuffix}`
+    const footerText =
+      descriptionChunks.length > 1 ? `Part ${index + 1}/${descriptionChunks.length}` : undefined
+    const title = truncate(`[** ${stripAnsiCodes(context)} **]`, MAX_TITLE_LENGTH)
+    const timeText = `**Time**: <t:${time}:R>`
     const descriptionLimit = Math.min(
       MAX_EMBED_DESCRIPTION_LENGTH,
-      MAX_EMBED_TEXT_LENGTH - title.length - footerText.length
+      MAX_EMBED_TEXT_LENGTH - title.length - (footerText?.length || 0)
     )
+    const payloadLimit = Math.max(0, descriptionLimit - timeText.length - 2)
 
     return {
       content: truncate(`**${level}**`, 2000),
       embeds: [
         {
           title,
-          description: truncate(description, descriptionLimit),
+          description: `${truncate(description, payloadLimit)}\n\n${timeText}`,
           color,
-          footer: { text: footerText }
+          ...(footerText ? { footer: { text: footerText } } : {})
         }
       ]
     }
